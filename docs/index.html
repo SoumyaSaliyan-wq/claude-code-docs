@@ -7,7 +7,6 @@
 <meta name="description" content="Soumya's personal dev journal — AI tooling, Claude, and whatever's on my screen this week.">
 <link rel="stylesheet" href="assets/style.css">
 <style>
-  
   /* ── HERO ── */
   .hero {
     max-width: 720px;
@@ -140,6 +139,27 @@
   }
   .post-card.coming-soon h3 { color: var(--ink-3); }
 
+  /* ── PORTFOLIO NAV LINK ── */
+  .site-header nav a.portfolio-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--accent);
+    border: 1px solid var(--accent-mid);
+    background: var(--accent-light);
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-family: var(--mono);
+    letter-spacing: 0.02em;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .site-header nav a.portfolio-link:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
   /* ── TOPICS ── */
   .topics {
     max-width: 720px;
@@ -166,6 +186,7 @@
   <a class="logo" href="index.html"><span>soumya</span>.dev</a>
   <nav>
     <a href="index.html" class="active">Posts</a>
+    <a href="https://soumya-github-io.pages.dev/" target="_blank" class="portfolio-link">Work ↗</a>
   </nav>
 </header>
 
@@ -178,8 +199,20 @@
 <div class="posts-section">
   <div class="posts-header">
     <h2>All posts</h2>
-    <span class="posts-count" id="post-count">3 posts</span>
+    <span class="posts-count" id="post-count">4 posts</span>
   </div>
+
+  <!-- ── POST 4 ── -->
+  <a class="post-card" href="posts/how-to-create-mcps.html">
+    <div class="post-meta">
+      <span class="post-tag">Claude Code</span>
+      <span class="post-date">Jul 2026</span>
+      <span class="post-read">8 min</span>
+    </div>
+    <h3>Build your own MCP. Wire Claude into anything.</h3>
+    <p>How to build a custom MCP server from scratch — schema, tool handlers, error handling, and connecting it to Claude Code.</p>
+    <span class="arrow">→</span>
+  </a>
 
   <!-- ── POST 1 ── -->
   <a class="post-card" href="posts/claude-code-artifacts.html">
@@ -206,7 +239,7 @@
   </a> -->
 
   <!-- ── POST 3 ── -->
-  <a class="post-card" href="posts/claude-code-mcps.html">
+  <!-- <a class="post-card" href="posts/claude-code-mcps.html">
     <div class="post-meta">
       <span class="post-tag">Claude Code</span>
       <span class="post-date">Jul 2026</span>
@@ -215,17 +248,8 @@
     <h3>Give Claude Code actual access to your stack.</h3>
     <p>What MCPs are, how to wire them in, and the specific ones I use daily — GitHub, Atlassian, n8n, and Snowflake.</p>
     <span class="arrow">→</span>
-  </a> 
-<a class="post-card" href="posts/how-to-create-mcps.html">
-    <div class="post-meta">
-      <span class="post-tag">Claude Code</span>
-      <span class="post-date">Jul 2026</span>
-      <span class="post-read">8 min</span>
-    </div>
-    <h3>Build your own MCP. Wire Claude into anything.</h3>
-    <p>How to build a custom MCP server from scratch — schema, tool handlers, error handling, and connecting it to Claude Code.</p>
-    <span class="arrow">→</span>
-  </a>
+  </a> --> 
+
   <!-- ── ADD NEW POST CARDS ABOVE THIS LINE ── -->
 
   <!-- placeholder shown until second post exists -->
