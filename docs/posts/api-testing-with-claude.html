@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The markdown files did the heavy lifting.</title>
+<meta name="description" content="How I turned a third-party API's PDF documentation into structured markdown files and a Python script that told me exactly which filter gives you what.">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .tag-pill {
+    margin-left: auto;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+  }
+
+  .hero {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 5rem 2rem 3rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 1.25rem;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+  .hero-sub {
+    font-size: 1.1rem;
+    color: var(--ink-2);
+    max-width: 560px;
+    margin-bottom: 2rem;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+
+  .content-wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  .section {
+    padding: 3.5rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .section:last-child { border-bottom: none; }
+
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .section h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 1rem;
+  }
+  p {
+    color: var(--ink-2);
+    margin-bottom: 1rem;
+  }
+  p:last-child { margin-bottom: 0; }
+
+  .lifecycle {
+    margin: 2rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card);
+  }
+  .lifecycle-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .lifecycle-step:last-child { border-bottom: none; }
+  .step-num {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-content h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.2rem;
+  }
+  .step-content p { font-size: 0.875rem; color: var(--ink-3); margin: 0; }
+
+  .code-block {
+    background: #1a1a18;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-family: var(--mono);
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid #2e2e2b;
+  }
+  .code-header .filename { font-size: 12px; color: #888; }
+  .code-header .lang-badge {
+    font-size: 11px;
+    color: var(--accent-mid);
+    background: rgba(80,70,228,0.15);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .code-body {
+    padding: 1.1rem 1.25rem;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #c8c8c0;
+    overflow-x: auto;
+  }
+  .code-body .kw  { color: #8b83f0; }
+  .code-body .str { color: #86d9b0; }
+  .code-body .cmt { color: #556; font-style: italic; }
+  .code-body .fn  { color: #f0c674; }
+  .code-body .val { color: #f5c27a; }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    background: var(--accent-light);
+    border-radius: 0 8px 8px 0;
+    margin: 1.5rem 0;
+  }
+  .callout p { font-size: 0.9rem; color: var(--ink-2); margin: 0; }
+  .callout strong { color: var(--accent); }
+
+  .file-tree {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 2;
+    color: var(--ink-2);
+  }
+  .file-tree .dir  { color: var(--ink); font-weight: 600; }
+  .file-tree .file { color: var(--ink-3); }
+  .file-tree .new  { color: var(--accent); }
+  .file-tree .indent { margin-left: 1.25rem; display: block; }
+
+  .scenario-list {
+    margin: 1.5rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .scenario-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .scenario-item:last-child { border-bottom: none; }
+  .sc-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .sc-badge.pass { background: var(--green-bg); color: var(--green); }
+  .sc-badge.fail { background: #f5eded; color: #a03030; }
+  .sc-badge.edge { background: var(--amber-bg); color: var(--amber); }
+  .sc-body h4 { font-size: 0.9rem; font-weight: 600; color: var(--ink); margin-bottom: 0.15rem; }
+  .sc-body p  { font-size: 0.85rem; color: var(--ink-3); margin: 0; }
+
+  .tip-list { margin: 1.5rem 0; }
+  .tip {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tip:last-child { border-bottom: none; }
+  .tip-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+  .tip-icon.green { background: var(--green-bg); }
+  .tip-body h4 { font-size: 0.95rem; font-weight: 600; color: var(--ink); margin-bottom: 0.2rem; }
+  .tip-body p  { font-size: 0.875rem; color: var(--ink-3); margin: 0; }
+
+  /* ── SAMPLE REPORT ── */
+  .sample-report {
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    background: var(--card);
+  }
+  .report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--page);
+  }
+  .report-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .report-badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    background: var(--rule);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .report-filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  @media (max-width: 600px) {
+    .report-filters { grid-template-columns: 1fr; }
+  }
+  .filter-card {
+    padding: 1.1rem 1.25rem;
+    border-right: 1px solid var(--rule);
+  }
+  .filter-card:last-child { border-right: none; }
+  .filter-card.winner {
+    background: var(--accent-light);
+    border-right: none;
+  }
+  .filter-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .winner-chip {
+    font-size: 10px;
+    font-weight: 500;
+    background: var(--accent);
+    color: #fff;
+    padding: 1px 7px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+  }
+  .filter-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.9rem;
+  }
+  .stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+  }
+  .stat-label { color: var(--ink-3); }
+  .stat-value { font-family: var(--mono); font-size: 12px; color: var(--ink); font-weight: 500; }
+  .stat-value.good { color: var(--green); }
+  .stat-value.warn { color: var(--amber); }
+  .filter-verdict {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    font-style: italic;
+  }
+  .filter-verdict.good { background: var(--green-bg); color: var(--green); }
+  .filter-verdict.warn { background: var(--amber-bg); color: var(--amber); }
+  .filter-verdict.neutral { background: var(--page); color: var(--ink-3); }
+  .report-summary {
+    padding: 1rem 1.25rem;
+  }
+  .summary-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+  .report-summary p {
+    font-size: 0.875rem;
+    color: var(--ink-2);
+    margin: 0;
+  }
+
+  mark {
+    background: #fff176;
+    color: var(--ink);
+    padding: 1px 2px;
+    border-radius: 2px;
+  }
+
+  code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    background: #ededea;
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+  .site-footer {
+    border-top: 1px solid var(--rule);
+    padding: 2rem;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="logo" href="../index.html"><span>soumya</span>.dev</a>
+  <nav>
+    <a href="../index.html">← All posts</a>
+  </nav>
+  <span class="tag-pill">Workflow · 2026</span>
+</header>
+
+<div class="hero">
+  <p class="hero-eyebrow">Claude Code · Real workflow</p>
+  <h1>The markdown files<br>did the <em>heavy lifting.</em></h1>
+  <p class="hero-sub">I had a hypothesis about a third-party API: different filters probably return different data. The documentation was a URL. In one session, Claude turned a PDF export of those docs into organised markdown files — and then into a Python script that told me exactly which filter gives you what.</p>
+  <div class="hero-meta">
+    <span>5 min read</span>
+    <span>·</span>
+    <span>Backend developers, QA engineers</span>
+  </div>
+</div>
+
+<div class="content-wrap">
+
+  <!-- 01 CONTEXT -->
+  <div class="section">
+    <p class="section-label">01 · Context</p>
+    <h2>Not a bug hunt. A behaviour check.</h2>
+    <p>We were working with a third-party API that supported a range of query filters. On paper they all looked like they'd give you the same data — just different ways to slice it. But I had a hunch that wasn't true. Different filters probably return different dataset shapes, different record counts, different field coverage. And if you're pulling data at scale, picking the wrong filter matters a lot.</p>
+    <p>I wanted to test this systematically: run the same logical query through different filter combinations, compare what came back, and figure out which filter gives you the most useful result set for our use case.</p>
+    <p>The problem was the API had a lot of filters. Writing a script for each permutation by hand would take hours. So I handed the docs to Claude and asked it to do the scaffolding.</p>
+
+    <div class="callout">
+      <p><strong>The goal wasn't to find bugs.</strong> It was to understand how the API actually behaves — which filters produce clean data, which ones bloat the response, and which one is the right default for our integration.</p>
+    </div>
+  </div>
+
+  <!-- 02 STEP 1 -->
+  <div class="section">
+    <p class="section-label">02 · Step one</p>
+    <h2>Export the docs, let Claude organise them</h2>
+    <p>I opened the vendor's documentation URL, exported it to PDF, and dropped it into Claude. The prompt was simple:</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="filename">Prompt to Claude</span>
+        <span class="lang-badge">natural language</span>
+      </div>
+      <div class="code-body">
+<span class="str">"Here's the API documentation as a PDF.
+Parse it and create separate markdown files."</span>
+      </div>
+    </div>
+
+    <p>That's it. No instructions on how to structure them, no list of what to include. Claude figured out the right separation on its own — auth got its own file, each logical API layer got its own file, and the structure was consistent across all of them.</p>
+
+    <p>What came back was better than I expected. Claude read the entire PDF and produced a clean set of files:</p>
+
+    <div class="file-tree">
+      <span class="dir">api-docs/</span>
+      <span class="indent new">├── auth.md</span>
+      <span class="indent new">├── users.md</span>
+      <span class="indent new">├── data-endpoints.md</span>
+      <span class="indent new">├── reporting.md</span>
+      <span class="indent new">└── webhooks.md</span>
+    </div>
+
+    <p>Each file had a consistent structure: the endpoint, the HTTP method, required auth headers, the request body shape, and what a success response looks like. <code>auth.md</code> specifically captured the token flow — what to call first, how the token is scoped, what the expiry behaviour is.</p>
+    <p>This step alone saved significant time. Instead of keeping the full PDF open and mentally parsing it while writing tests, I now had a clean, scannable reference that Claude itself could read back later.</p>
+  </div>
+
+  <!-- 03 STEP 2 -->
+  <div class="section">
+    <p class="section-label">03 · Step two</p>
+    <h2>Turn the markdown files into a filter comparison script</h2>
+    <p>With the structured markdown files in place, the next prompt was about what I actually wanted to learn — not just "run these endpoints" but "compare what different filters return":</p>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="filename">Prompt to Claude Code</span>
+        <span class="lang-badge">natural language</span>
+      </div>
+      <div class="code-body">
+<span class="str">"Read the markdown files in api-docs/. Create a Python script to match my hypothesis —
+use this filter and compare, and tell me which is better
+and what is the difference."</span>
+      </div>
+    </div>
+
+    <p>Again, no itemised instructions. Because the markdown files already captured exactly what filters existed and what each one did, Claude had enough context to understand what "compare" meant — same query, different filters, tell me what changes. It produced a script that ran each filter variant and captured the result shape side by side:</p>
+
+    <div class="scenario-list">
+      <div class="scenario-item">
+        <span class="sc-badge pass">VOLUME</span>
+        <div class="sc-body">
+          <h4>Record count per filter</h4>
+          <p>Some filters returned 10x more records than others for an identical logical query. That's a cost and performance decision, not just a data one.</p>
+        </div>
+      </div>
+      <div class="scenario-item">
+        <span class="sc-badge pass">COVERAGE</span>
+        <div class="sc-body">
+          <h4>Field population rate</h4>
+          <p>Which fields were actually filled in vs consistently null across different filter paths — surfacing which filter gives you the richest dataset.</p>
+        </div>
+      </div>
+      <div class="scenario-item">
+        <span class="sc-badge edge">OVERLAP</span>
+        <div class="sc-body">
+          <h4>Result set overlap between filters</h4>
+          <p>Are two filters returning the same records by a different path, or genuinely different subsets? The answer changed how we thought about combining them.</p>
+        </div>
+      </div>
+      <div class="scenario-item">
+        <span class="sc-badge edge">PERF</span>
+        <div class="sc-body">
+          <h4>Response time variance</h4>
+          <p>One filter was documented the same as the others but consistently ran 3–4x slower. That's the kind of thing you don't see in docs — only in a comparison run.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 REPORT -->
+  <div class="section">
+    <p class="section-label">04 · The output</p>
+    <h2>A report on what each filter actually gives you</h2>
+    <p>Claude wrote the Python scripts, ran them, and came back with a final report. Not pass/fail — a straight breakdown of what each filter returns and how the datasets differ.</p>
+
+    <!-- SAMPLE REPORT -->
+    <div class="sample-report">
+      <div class="report-header">
+        <span class="report-title">Filter Comparison Report</span>
+        <span class="report-badge">sample output</span>
+      </div>
+
+      <div class="report-filters">
+
+        <div class="filter-card">
+          <div class="filter-name">by_region</div>
+          <div class="filter-stats">
+            <div class="stat">
+              <span class="stat-label">Records</span>
+              <span class="stat-value">1,842</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Fields populated</span>
+              <span class="stat-value good">94%</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Unique to filter</span>
+              <span class="stat-value">412</span>
+            </div>
+          </div>
+          <div class="filter-verdict neutral">Mid-size result, good coverage</div>
+        </div>
+
+        <div class="filter-card">
+          <div class="filter-name">by_category</div>
+          <div class="filter-stats">
+            <div class="stat">
+              <span class="stat-label">Records</span>
+              <span class="stat-value">18,204</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Fields populated</span>
+              <span class="stat-value warn">61%</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Unique to filter</span>
+              <span class="stat-value">9,830</span>
+            </div>
+          </div>
+          <div class="filter-verdict warn">Large result set — data is sparse</div>
+        </div>
+
+        <div class="filter-card winner">
+          <div class="filter-name">by_entity_id <span class="winner-chip">recommended</span></div>
+          <div class="filter-stats">
+            <div class="stat">
+              <span class="stat-label">Records</span>
+              <span class="stat-value">1,756</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Fields populated</span>
+              <span class="stat-value good">97%</span>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Unique to filter</span>
+              <span class="stat-value">304</span>
+            </div>
+          </div>
+          <div class="filter-verdict good">Tightest result set, highest field coverage</div>
+        </div>
+
+      </div>
+
+      <div class="report-summary">
+        <span class="summary-label">Recommendation</span>
+        <p>Use <code>by_entity_id</code> when data completeness matters. Use <code>by_category</code> only if total volume is the priority — expect sparse fields.</p>
+      </div>
+    </div>
+
+    <p>The hypothesis was right: the filters weren't interchangeable. <code>by_category</code> looks powerful on paper — it returns the most records — but most of those records have large chunks of data missing. <code>by_entity_id</code> returns a smaller, cleaner dataset where almost every field is populated.</p>
+    <p>That's now a decision backed by actual data. Not a guess, not re-reading the docs — a script that ran the comparison and spelled out the difference.</p>
+
+    <div class="callout">
+      <p><strong>The script is reusable.</strong> When the vendor changes something or adds a new filter, re-run it and the comparison updates automatically.</p>
+    </div>
+  </div>
+
+  <!-- 05 WHY IT WORKS -->
+  <div class="section">
+    <p class="section-label">05 · Why it works</p>
+    <h2>What makes this workflow click</h2>
+    <p>The key move was the intermediate step — structured markdown before any script. Most people would go straight from "I have API docs" to "write me a comparison script." <mark>That shortcut usually produces shallow output — the model is trying to parse an unstructured document and generate code at the same time.</mark></p>
+    <p>By first asking Claude to re-structure the docs into clean, per-domain files, you give it a better substrate to work from. The script generation step becomes almost mechanical — each markdown file is a spec, and the comparison logic follows directly from the filter parameters documented in it.</p>
+
+    <div class="lifecycle">
+      <div class="lifecycle-step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Raw docs → structured markdown</h4>
+          <p>Claude reads the PDF and re-formats into consistent, per-domain files. Auth gets its own file. Each API group gets its own file. No mixing.</p>
+        </div>
+      </div>
+      <div class="lifecycle-step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Markdown → test scenarios</h4>
+          <p>With structured input, Claude can enumerate scenarios systematically — not just the happy path, but auth failures, validation errors, and edge cases per endpoint.</p>
+        </div>
+      </div>
+      <div class="lifecycle-step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Tests → run → report</h4>
+          <p>Claude Code runs the tests and surfaces the failures. The interesting ones are always the discrepancies between docs and actual behaviour.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 06 TIPS -->
+  <div class="section">
+    <p class="section-label">06 · Tips</p>
+    <h2>Things worth knowing if you try this</h2>
+
+    <div class="tip-list">
+      <div class="tip">
+        <div class="tip-icon green">✅</div>
+        <div class="tip-body">
+          <h4>Don't just feed the URL — prep the input first</h4>
+          <p>Before pointing a coding agent at raw documentation, export it into a format it can actually work with. A URL is a starting point. A well-structured file is a working input.</p>
+        </div>
+      </div>
+      <div class="tip">
+        <div class="tip-icon green">✅</div>
+        <div class="tip-body">
+          <h4>Coding agents read markdown files really well</h4>
+          <p>Markdown is one of the most powerful inputs you can give a coding agent. Clean headings, consistent structure, no noise — it reads and reasons over it far better than a PDF or a web page.</p>
+        </div>
+      </div>
+      <div class="tip">
+        <div class="tip-icon green">✅</div>
+        <div class="tip-body">
+          <h4>Structured output over raw dumps</h4>
+          <p>When you ask Claude to parse docs, ask for structure — one file per domain, consistent sections. The quality of what the agent produces later is directly tied to how well the input was organised.</p>
+        </div>
+      </div>
+      <div class="tip">
+        <div class="tip-icon green">✅</div>
+        <div class="tip-body">
+          <h4>Your prompt sets the goal, not the steps</h4>
+          <p>You don't need to spell out every instruction. Give the agent a clear goal and trust it to figure out the how — especially when the context is already in the markdown files.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <a href="../index.html">← All posts</a> · soumya.dev
+</footer>
+
+</body>
+</html>
