@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tool Calling Explained — soumya.dev</title>
+<meta name="description" content="How AI models actually do things — the mechanism behind tool calling, when to use it, and why it matters.">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+  .tag-pill {
+    margin-left: auto;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 5rem 2rem 3rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 1.25rem;
+  }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero-sub {
+    font-size: 1.1rem;
+    color: var(--ink-2);
+    max-width: 560px;
+    margin-bottom: 2rem;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+
+  /* ── LAYOUT ── */
+  .content-wrap { max-width: 720px; margin: 0 auto; padding: 0 2rem; }
+  .section { padding: 3.5rem 0; border-bottom: 1px solid var(--rule); }
+  .section:last-child { border-bottom: none; }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .section h2 { font-size: 1.5rem; font-weight: 600; color: var(--ink); margin-bottom: 1rem; }
+  p { color: var(--ink-2); margin-bottom: 1rem; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── CALLOUTS ── */
+  .callout {
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    background: var(--accent-light);
+    border-radius: 0 8px 8px 0;
+    margin: 1.5rem 0;
+  }
+  .callout p { font-size: 0.9rem; color: var(--ink-2); margin: 0; }
+  .callout strong { color: var(--accent); }
+
+  /* ── BEFORE / AFTER ── */
+  .before-after {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin: 1.5rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card);
+  }
+  @media (max-width: 560px) { .before-after { grid-template-columns: 1fr; } }
+  .ba-col { padding: 1.25rem 1.5rem; }
+  .ba-col:first-child { border-right: 1px solid var(--rule); }
+  .ba-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .ba-label::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+  .ba-label.before { color: #a03030; }
+  .ba-label.before::before { background: #e05555; }
+  .ba-label.after  { color: var(--green); }
+  .ba-label.after::before  { background: var(--green); }
+  .ba-col p { font-size: 0.9rem; color: var(--ink-2); margin: 0; line-height: 1.65; }
+
+  /* ── DIAGRAM ── */
+  .diagram-wrap {
+    margin: 1.5rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1.25rem;
+    background: var(--card);
+  }
+  .diagram-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem !important;
+  }
+
+  /* ── USE CASE CARDS ── */
+  .usecase-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+    margin: 2rem 0;
+  }
+  @media (max-width: 560px) { .usecase-grid { grid-template-columns: 1fr; } }
+
+  .usecase-card {
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+    background: var(--card);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .usecase-card:hover {
+    border-color: var(--accent-mid);
+    box-shadow: 0 2px 10px rgba(80,70,228,0.08);
+  }
+  .usecase-card h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 5px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .usecase-card p {
+    font-size: 0.82rem;
+    color: var(--ink-3);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ── TIPS ── */
+  .tip-grid { display: flex; flex-direction: column; gap: 0; margin: 2rem 0; border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; background: var(--card); }
+
+  .tip-item {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--rule);
+    transition: background 0.15s;
+  }
+  .tip-item:last-child { border-bottom: none; }
+  .tip-item:hover { background: var(--page); }
+
+  .tip-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent-light);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .tip-body h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+  .tip-body p {
+    font-size: 0.875rem;
+    color: var(--ink-3);
+    margin: 0;
+    line-height: 1.6;
+  }
+  .tip-body code {
+    font-family: var(--mono);
+    font-size: 0.8em;
+    background: #ededea;
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+  /* ── CODE BLOCK ── */
+  .code-block {
+    background: #1e1e2e;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+  .code-block pre {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    color: #cdd6f4;
+  }
+  .code-block .key   { color: #89b4fa; }
+  .code-block .str   { color: #a6e3a1; }
+  .code-block .cmt   { color: #6c7086; font-style: italic; }
+  .code-block .num   { color: #fab387; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="logo" href="../index.html"><span>soumya</span>.dev</a>
+  <nav>
+    <a href="../index.html">← All posts</a>
+  </nav>
+  <span class="tag-pill">AI · 2026</span>
+</header>
+
+<div class="hero">
+  <p class="hero-eyebrow">AI · Tool Calling</p>
+  <h1>Not just answers.<br><em>Actions.</em></h1>
+  <p class="hero-sub">LLMs are great at text. But the real world needs actions — fetching data, running code, calling APIs. Tool calling is how that gap gets closed. Here's how it works and when to reach for it.</p>
+  <div class="hero-meta">
+    <span>6 min read</span>
+    <span>·</span>
+    <span>Beginner–Intermediate</span>
+  </div>
+</div>
+
+<div class="content-wrap">
+
+  <!-- SECTION 1: THE PROBLEM -->
+  <div class="section">
+    <p class="section-label">01 · The Problem</p>
+    <h2>What an LLM can't do on its own</h2>
+    <p>A language model is, at its core, a next-token predictor. It's very good at reasoning, writing, and synthesising — but it has hard limits. It doesn't know what time it is. It can't fetch a URL. It can't run your code. It can't send an email.</p>
+    <p>Its knowledge is frozen at a training cutoff. Ask it "what's the weather in Austin right now?" and the best it can do is tell you about Austin's climate in general — it has no access to live data.</p>
+
+    <div class="before-after">
+      <div class="ba-col">
+        <div class="ba-label before">LLM alone</div>
+        <p>"I don't have access to real-time data, but Austin in July is typically hot and humid, with temperatures around 95–100°F."</p>
+      </div>
+      <div class="ba-col">
+        <div class="ba-label after">LLM + tool calling</div>
+        <p>"Right now in Austin it's 98°F with a 40% chance of rain this afternoon. You'll want an umbrella."</p>
+      </div>
+    </div>
+
+    <p>Tool calling is the mechanism that bridges this gap — it lets the model reach out and do something in the real world, then use the result to answer you properly.</p>
+  </div>
+
+  <!-- SECTION 2: WHAT IT IS -->
+  <div class="section">
+    <p class="section-label">02 · What</p>
+    <h2>What tool calling actually is</h2>
+    <p>Tool calling (also called "function calling") is a way to give a language model a menu of functions it can invoke. You describe each tool — its name, what it does, and what parameters it takes — and the model decides when to call one and with what arguments.</p>
+
+    <div class="callout">
+      <p><strong>Key insight:</strong> The model doesn't execute the tool itself. It outputs a structured request saying "call this function with these arguments." Your code runs the function and feeds the result back. The model then uses that result to produce its final answer.</p>
+    </div>
+
+    <p>Think of it like this: the model is a very smart analyst who can't use a computer. You're the assistant sitting next to them. When they need data, they tell you what to look up — you look it up and hand them the result. They do the thinking; you do the fetching.</p>
+  </div>
+
+  <!-- SECTION 3: HOW IT WORKS -->
+  <div class="section">
+    <p class="section-label">03 · How</p>
+    <h2>The tool calling loop</h2>
+    <p>There's a specific back-and-forth that happens under the hood every time a tool is called. Understanding this loop makes everything else click.</p>
+
+    <div class="diagram-wrap">
+      <svg width="100%" viewBox="0 0 520 440" role="img" xmlns="http://www.w3.org/2000/svg">
+        <title>The tool calling loop</title>
+        <desc>Four-step vertical loop: user asks, model decides to call a tool, your code runs it, result returns to model, model answers.</desc>
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- Step 1: User -->
+        <rect x="60" y="10" width="400" height="58" rx="8" fill="#ededfc" stroke="#7f77dd" stroke-width="0.5"/>
+        <text x="260" y="34" text-anchor="middle" font-family="inherit" font-size="12" font-weight="600" fill="#3c3489">① You</text>
+        <text x="260" y="52" text-anchor="middle" font-family="inherit" font-size="11" fill="#534ab7">"What's the weather in Austin right now?"</text>
+
+        <!-- Arrow + label -->
+        <line x1="260" y1="68" x2="260" y2="108" stroke="#888780" stroke-width="1" marker-end="url(#arr)"/>
+        <text x="272" y="93" font-family="inherit" font-size="10" fill="#888780">question sent to model</text>
+
+        <!-- Step 2: Model decides -->
+        <rect x="60" y="108" width="400" height="68" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.5"/>
+        <text x="260" y="130" text-anchor="middle" font-family="inherit" font-size="12" font-weight="600" fill="#085041">② Model decides to call a tool</text>
+        <text x="260" y="148" text-anchor="middle" font-family="inherit" font-size="11" fill="#0f6e56">Outputs a structured request:</text>
+        <text x="260" y="166" text-anchor="middle" font-family="monospace" font-size="11" fill="#0f6e56">get_weather(city="Austin")</text>
+
+        <!-- Arrow + label -->
+        <line x1="260" y1="176" x2="260" y2="216" stroke="#888780" stroke-width="1" marker-end="url(#arr)"/>
+        <text x="272" y="201" font-family="inherit" font-size="10" fill="#888780">tool call request</text>
+
+        <!-- Step 3: Your code -->
+        <rect x="60" y="216" width="400" height="68" rx="8" fill="#faeeda" stroke="#ba7517" stroke-width="0.5"/>
+        <text x="260" y="238" text-anchor="middle" font-family="inherit" font-size="12" font-weight="600" fill="#633806">③ Your code runs the function</text>
+        <text x="260" y="256" text-anchor="middle" font-family="inherit" font-size="11" fill="#854f0b">Calls the weather API, gets the live data.</text>
+        <text x="260" y="274" text-anchor="middle" font-family="inherit" font-size="11" fill="#854f0b">Returns: 98°F, 40% chance of rain</text>
+
+        <!-- Arrow + label -->
+        <line x1="260" y1="284" x2="260" y2="324" stroke="#888780" stroke-width="1" marker-end="url(#arr)"/>
+        <text x="272" y="309" font-family="inherit" font-size="10" fill="#888780">result fed back to model</text>
+
+        <!-- Step 4: Model answers -->
+        <rect x="60" y="324" width="400" height="68" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.5"/>
+        <text x="260" y="346" text-anchor="middle" font-family="inherit" font-size="12" font-weight="600" fill="#085041">④ Model writes the final answer</text>
+        <text x="260" y="364" text-anchor="middle" font-family="inherit" font-size="11" fill="#0f6e56">"It's 98°F in Austin right now with a</text>
+        <text x="260" y="382" text-anchor="middle" font-family="inherit" font-size="11" fill="#0f6e56">40% chance of rain — bring an umbrella."</text>
+
+      </svg>
+    </div>
+
+    <p>A tool definition has three parts the model reads: a <strong>name</strong>, a <strong>description</strong> (this is the most important — the model uses it to decide when to call the tool), and a <strong>parameters schema</strong> that specifies what arguments to pass.</p>
+
+    <div class="code-block">
+      <pre>{
+  <span class="key">"name"</span>: <span class="str">"get_weather"</span>,
+  <span class="key">"description"</span>: <span class="str">"Get the current weather for a given city. Use this when the user asks about current weather conditions or forecasts."</span>,
+  <span class="key">"parameters"</span>: {
+    <span class="key">"type"</span>: <span class="str">"object"</span>,
+    <span class="key">"properties"</span>: {
+      <span class="key">"city"</span>: {
+        <span class="key">"type"</span>: <span class="str">"string"</span>,
+        <span class="key">"description"</span>: <span class="str">"The city name, e.g. Austin"</span>
+      }
+    },
+    <span class="key">"required"</span>: [<span class="str">"city"</span>]
+  }
+}</pre>
+    </div>
+
+    <p>Notice the description isn't just "get weather" — it explicitly tells the model <em>when</em> to use this tool. That specificity matters a lot. The model makes its tool selection decision based on how well the description matches the user's intent.</p>
+  </div>
+
+  <!-- SECTION 4: USE CASES -->
+  <div class="section">
+    <p class="section-label">04 · Use Cases</p>
+    <h2>What you can actually do with it</h2>
+    <p>Tool calling unlocks four broad categories of capability that a plain LLM can't handle.</p>
+
+    <div class="usecase-grid">
+      <div class="usecase-card">
+        <h3>🌐 Live data</h3>
+        <p>Fetch real-time information the model's training doesn't include — weather, stock prices, news, live database queries.</p>
+      </div>
+      <div class="usecase-card">
+        <h3>🧮 Deterministic computation</h3>
+        <p>Run calculations, parse dates, convert currencies. Don't trust a model to do math — trust a calculator.</p>
+      </div>
+      <div class="usecase-card">
+        <h3>✍️ Side effects</h3>
+        <p>Write to a database, send an email, create a Jira ticket, push a file to S3. Actions that change state in the world.</p>
+      </div>
+      <div class="usecase-card">
+        <h3>🔗 Multi-step workflows</h3>
+        <p>Chain multiple tool calls together — search for a user, look up their orders, then send them a refund. The model orchestrates the steps.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: WHEN TO USE -->
+  <div class="section">
+    <p class="section-label">05 · When</p>
+    <h2>When to use it — and when not to</h2>
+    <p>Tool calling adds latency and complexity. It's not always the right answer.</p>
+
+    <div class="tip-grid">
+      <div class="tip-item">
+        <div class="tip-num">✓</div>
+        <div class="tip-body">
+          <h4>Use it when the answer depends on real-time or user-specific data</h4>
+          <p>If the answer changes depending on when or who asks — current stock price, a user's account balance, today's schedule — you need a tool. The model can't reason about data it's never seen.</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-num">✓</div>
+        <div class="tip-body">
+          <h4>Use it when you need a side effect</h4>
+          <p>Sending a message, saving a record, triggering a workflow — anything that needs to actually happen in a system requires a tool. The model alone can only describe what to do, not do it.</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-num">✓</div>
+        <div class="tip-body">
+          <h4>Use it when you need guaranteed precision</h4>
+          <p>LLMs can hallucinate math, dates, and unit conversions. If precision is critical, use a tool that runs actual code — <code>calculate()</code>, <code>parse_date()</code> — and pass the result to the model.</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-num">✗</div>
+        <div class="tip-body">
+          <h4>Skip it for static knowledge questions</h4>
+          <p>"What's the capital of France?" doesn't need a tool — the model already knows. Adding unnecessary tools creates decision overhead and extra latency for no benefit.</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-num">✗</div>
+        <div class="tip-body">
+          <h4>Skip it when the description is too vague to be reliable</h4>
+          <p>If you can't write a clear one-sentence description of exactly when a tool should be called, the model won't use it reliably either. Fix the tool design first.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 6: WHAT'S NEXT -->
+  <div class="section">
+    <p class="section-label">06 · What's next</p>
+    <h2>Tool calling is the foundation of AI agents</h2>
+    <p>Once you understand tool calling, everything in the AI agent space starts to make more sense. An agent is essentially a model in a loop — it calls tools, observes results, and decides what to do next until the task is done.</p>
+    <p>This is also where <strong>MCP (Model Context Protocol)</strong> fits in. MCP is a standardisation layer on top of tool calling — a shared protocol so tools can be defined once and used across different models and clients without rewiring everything. Think of tool calling as the concept, and MCP as the ecosystem built around it.</p>
+
+    <div class="callout">
+      <p><strong>The pattern scales:</strong> A single tool call answers a question. A chain of tool calls completes a task. An agent with tools and a loop handles a workflow. Same primitive, different scale.</p>
+    </div>
+
+    <p>The description is the most important thing you write. Not the code that runs the tool — the two sentences that tell the model when to reach for it. That's the lever everything else turns on.</p>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <a href="../index.html">← All posts</a> · soumya.dev
+</footer>
+
+</body>
+</html>
