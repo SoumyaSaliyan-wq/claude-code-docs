@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>n8n — soumya.dev</title>
+<meta name="description" content="How I use n8n to automate repetitive work, build AI agents, and stop context-switching between tools.">
+<link rel="stylesheet" href="../assets/style.css">
+<style>
+
+  .tag-pill {
+    margin-left: auto;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 5rem 2rem 3rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 1.25rem;
+  }
+  .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero-sub {
+    font-size: 1.1rem;
+    color: var(--ink-2);
+    max-width: 560px;
+    margin-bottom: 2rem;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 1.5rem;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+
+  /* ── LAYOUT ── */
+  .content-wrap { max-width: 720px; margin: 0 auto; padding: 0 2rem; }
+  .section { padding: 3.5rem 0; border-bottom: 1px solid var(--rule); }
+  .section:last-child { border-bottom: none; }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .section h2 { font-size: 1.5rem; font-weight: 600; color: var(--ink); margin-bottom: 1rem; }
+  p { color: var(--ink-2); margin-bottom: 1rem; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    background: var(--accent-light);
+    border-radius: 0 8px 8px 0;
+    margin: 1.5rem 0;
+  }
+  .callout p { font-size: 0.9rem; color: var(--ink-2); margin: 0; }
+  .callout strong { color: var(--accent); }
+
+  /* ── BEFORE / AFTER ── */
+  .before-after {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin: 1.5rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card);
+  }
+  @media (max-width: 560px) { .before-after { grid-template-columns: 1fr; } }
+  .ba-col { padding: 1.25rem 1.5rem; }
+  .ba-col:first-child { border-right: 1px solid var(--rule); }
+  .ba-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .ba-label::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+  }
+  .ba-label.before { color: #a03030; }
+  .ba-label.before::before { background: #e05555; }
+  .ba-label.after  { color: var(--green); }
+  .ba-label.after::before  { background: var(--green); }
+  .ba-col p { font-size: 0.9rem; color: var(--ink-2); margin: 0; line-height: 1.65; }
+
+  /* ── WORKFLOW CARDS ── */
+  .workflow-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.85rem;
+    margin: 2rem 0;
+  }
+  @media (max-width: 560px) { .workflow-grid { grid-template-columns: 1fr; } }
+  .workflow-card {
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+    background: var(--card);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .workflow-card:hover {
+    border-color: var(--accent-mid);
+    box-shadow: 0 2px 10px rgba(80,70,228,0.08);
+  }
+  .workflow-card-top {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+  .workflow-icon {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--accent-light);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .workflow-card h3 {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0;
+  }
+  .workflow-card p {
+    font-size: 0.82rem;
+    color: var(--ink-3);
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  /* ── DIAGRAM ── */
+  .diagram-wrap {
+    margin: 1.5rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    padding: 1.25rem;
+    background: var(--card);
+  }
+  .diagram-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1rem !important;
+  }
+
+  /* ── TIPS ── */
+  .tip-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 2rem 0;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card);
+  }
+  .tip-item {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--rule);
+    transition: background 0.15s;
+  }
+  .tip-item:last-child { border-bottom: none; }
+  .tip-item:hover { background: var(--page); }
+  .tip-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent-light);
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .tip-body h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+  .tip-body p {
+    font-size: 0.875rem;
+    color: var(--ink-3);
+    margin: 0;
+    line-height: 1.6;
+  }
+  .tip-body code {
+    font-family: var(--mono);
+    font-size: 0.8em;
+    background: #ededea;
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--accent);
+  }
+
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="logo" href="../index.html"><span>soumya</span>.dev</a>
+  <nav>
+    <a href="../index.html">← All posts</a>
+  </nav>
+  <span class="tag-pill">n8n · 2026</span>
+</header>
+
+<div class="hero">
+  <p class="hero-eyebrow">Automation · n8n</p>
+  <h1>How I use n8n to stop<br><em>doing the same thing twice.</em></h1>
+  <p class="hero-sub">n8n is the automation tool I kept coming back to after trying everything else. Here's how I actually use it — not a feature tour, just the workflows that stuck.</p>
+  <div class="hero-meta">
+    <span>7 min read</span>
+    <span>·</span>
+    <span>Practical</span>
+  </div>
+</div>
+
+<div class="content-wrap">
+
+  <!-- SECTION 1: WHY N8N -->
+  <div class="section">
+    <p class="section-label">01 · Why</p>
+    <h2>Why n8n and not something else</h2>
+    <p>I'd tried building automations with custom scripts before. They work until you're the only one who can maintain them, and they break quietly. I wanted something visual enough to reason about at a glance, but that didn't take away the ability to write real logic when I needed it.</p>
+    <p>n8n hit that balance. It's visual, but it lets me write JavaScript or Python inside any node when the GUI isn't enough. I self-host it, which means my data stays where I want it and I'm not paying per task.</p>
+
+    <div class="before-after">
+      <div class="ba-col">
+        <div class="ba-label before">Before n8n</div>
+        <p>A mix of cron scripts and a growing list of "I'll automate that eventually" tasks that never got done.</p>
+      </div>
+      <div class="ba-col">
+        <div class="ba-label after">After n8n</div>
+        <p>One place to see, debug, and reuse every automation I've built — and a much shorter list of things I still do manually.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SECTION 2: LOCAL SETUP -->
+  <div class="section">
+    <p class="section-label">02 · Setup</p>
+    <h2>Running n8n locally with Docker</h2>
+    <p>The quickest way to get n8n running is a single Docker command. No account needed, no cloud, everything local.</p>
+
+    <p>First, create a named Docker volume so your workflows and credentials survive container restarts:</p>
+
+    <div class="diagram-wrap">
+      <p class="diagram-label">Step 1 — create the volume</p>
+      <pre style="font-family: var(--mono); font-size: 0.82rem; color: var(--ink-2); line-height: 1.7;">docker volume create n8n_data</pre>
+    </div>
+
+    <p>Then start the container:</p>
+
+    <div class="diagram-wrap">
+      <p class="diagram-label">Step 2 — run n8n</p>
+      <pre style="font-family: var(--mono); font-size: 0.82rem; color: var(--ink-2); line-height: 1.7; white-space: pre-wrap; word-break: break-all;">docker run -it --rm \
+  --name n8n \
+  -p 5678:5678 \
+  -e GENERIC_TIMEZONE="Asia/Kolkata" \
+  -e TZ="Asia/Kolkata" \
+  -e N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true \
+  -e N8N_RUNNERS_ENABLED=true \
+  -v n8n_data:/home/node/.n8n \
+  docker.n8n.io/n8nio/n8n</pre>
+    </div>
+
+    <p>Open <code>http://localhost:5678</code> and you're in. A few things worth noting about these flags:</p>
+
+    <div class="tip-grid" style="margin-top: 1rem;">
+      <div class="tip-item">
+        <div class="tip-num">↳</div>
+        <div class="tip-body">
+          <h4><code>GENERIC_TIMEZONE</code> + <code>TZ</code></h4>
+          <p>Sets the timezone for both n8n's scheduler and the underlying system. Without this, cron triggers run on UTC and your "every morning at 9am" workflow fires at the wrong time.</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-num">↳</div>
+        <div class="tip-body">
+          <h4><code>N8N_RUNNERS_ENABLED</code></h4>
+          <p>Enables the task runner mode introduced in recent versions — runs Code node executions in a separate process, which is more stable and avoids blocking the main n8n process.</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-num">↳</div>
+        <div class="tip-body">
+          <h4><code>n8n_data</code> named volume</h4>
+          <p>Using a named volume instead of a bind mount means Docker manages the storage. Your workflows, credentials, and settings persist even after the container is removed and recreated.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <p><strong>Keep credentials safe.</strong> Everything n8n stores — credentials, workflow history, settings — lives inside that named volume. Back it up with <code>docker run --rm -v n8n_data:/data alpine tar czf - /data</code> before upgrading or wiping containers.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 3: WORKFLOWS -->
+  <div class="section">
+    <p class="section-label">03 · What I build</p>
+    <h2>The workflows I actually run</h2>
+    <p>These aren't showcase automations — they're the ones still running months later because they genuinely save me time.</p>
+
+    <div class="workflow-grid">
+      <div class="workflow-card">
+        <div class="workflow-card-top">
+          <div class="workflow-icon">📊</div>
+          <h3>Scheduled reports</h3>
+        </div>
+        <p>Runs on a cron schedule, queries an internal database, shapes the results with a Code node, and delivers a formatted report — to Slack, email, or a shared doc — without anyone having to manually pull data.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-card-top">
+          <div class="workflow-icon">🪣</div>
+          <h3>S3 data pipelines</h3>
+        </div>
+        <p>Picks up files from AWS S3 on a schedule or trigger, processes them — parse, transform, validate — and pushes results downstream to a database or another service. No custom Lambda needed.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-card-top">
+          <div class="workflow-icon">🔌</div>
+          <h3>Third-party API ingestion</h3>
+        </div>
+        <p>Polls external APIs on a schedule, handles pagination and auth refresh automatically, and loads the data into an internal store. The HTTP Request node covers anything without a native n8n integration.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-card-top">
+          <div class="workflow-icon">🔔</div>
+          <h3>Alerts &amp; thresholds</h3>
+        </div>
+        <p>Checks a metric or condition on a schedule — database query, API response, file count — and fires a Slack alert or email the moment something goes outside the expected range.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-card-top">
+          <div class="workflow-icon">🔍</div>
+          <h3>Scheduled scans</h3>
+        </div>
+        <p>Runs a sweep across a data source or set of endpoints, flags anomalies or missing records, and surfaces a summary. Useful for data quality checks that would otherwise be a manual spot-check.</p>
+      </div>
+      <div class="workflow-card">
+        <div class="workflow-card-top">
+          <div class="workflow-icon">🧩</div>
+          <h3>Sub-workflow library</h3>
+        </div>
+        <p>Common logic — auth refresh, retry with backoff, Slack alert — lives in reusable sub-workflows. Any workflow can call them like a function so I'm not copy-pasting the same nodes everywhere.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: CLAUDE CODE + N8N -->
+  <div class="section">
+    <p class="section-label">04 · Local dev</p>
+    <h2>Building workflows with Claude Code + n8n</h2>
+    <p>Once n8n is running locally, you can pair it with Claude Code to build workflows faster than clicking through the UI. The setup is straightforward: Claude Code connects to your local n8n instance via the n8n MCP server, and with a local API key it can create, update, and trigger workflows directly from the conversation.</p>
+
+    <div class="callout">
+      <p><strong>What you need:</strong> n8n running on <code>localhost:5678</code>, an n8n API key (Settings → API → Create), and the n8n MCP configured in Claude Code's settings.</p>
+    </div>
+
+    <p>The n8n MCP gives Claude Code a set of tools — list workflows, get a workflow's JSON, create or update a workflow, execute a run. Combined with the n8n-specific skills available in Claude Code (expression syntax, node configuration, workflow patterns), you can describe what you want in plain language and have a working workflow scaffold ready to review.</p>
+
+    <div class="before-after">
+      <div class="ba-col">
+        <div class="ba-label before">Without this setup</div>
+        <p>Open the n8n canvas, drag nodes one by one, look up expression syntax, manually wire connections, test, fix, repeat.</p>
+      </div>
+      <div class="ba-col">
+        <div class="ba-label after">With Claude Code + n8n MCP</div>
+        <p>"Create a workflow that polls this API every hour and posts to Slack if anything changed." — it writes the JSON, creates it in n8n, and you just review.</p>
+      </div>
+    </div>
+
+    <p>The n8n skills are what make this accurate rather than just fast. Claude Code has built-in knowledge of n8n's expression syntax (<code>$json</code>, <code>$input</code>, <code>$now</code>), common node configurations, and proven workflow patterns — so it doesn't just generate a plausible-looking workflow, it generates one that actually runs.</p>
+  </div>
+
+  <!-- SECTION 5: AI AGENTS -->
+  <div class="section">
+    <p class="section-label">05 · AI workflows</p>
+    <h2>Where the AI Agent node changed things</h2>
+    <p>The part that surprised me most about n8n isn't the integrations — it's the AI Agent node. You wire up an LLM, attach tools (HTTP requests, database lookups, sub-workflows), and the agent decides which tools to call and in what order. You don't write the orchestration logic, you just define what's available.</p>
+
+    <div class="diagram-wrap">
+      <p class="diagram-label">Example: Research agent flow</p>
+      <svg width="100%" viewBox="0 0 660 200" xmlns="http://www.w3.org/2000/svg" role="img">
+        <title>n8n AI research agent flow</title>
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- Webhook -->
+        <rect x="10" y="70" width="110" height="56" rx="8" fill="#ededfc" stroke="#7f77dd" stroke-width="0.5"/>
+        <text x="65" y="94" text-anchor="middle" font-family="inherit" font-size="11" font-weight="500" fill="#3c3489">Webhook</text>
+        <text x="65" y="112" text-anchor="middle" font-family="inherit" font-size="10" fill="#534ab7">receives topic</text>
+
+        <line x1="120" y1="98" x2="158" y2="98" stroke="#888780" stroke-width="1" marker-end="url(#arr)"/>
+
+        <!-- AI Agent -->
+        <rect x="160" y="60" width="130" height="76" rx="8" fill="#e1f5ee" stroke="#1d9e75" stroke-width="0.5"/>
+        <text x="225" y="86" text-anchor="middle" font-family="inherit" font-size="11" font-weight="500" fill="#085041">AI Agent</text>
+        <text x="225" y="104" text-anchor="middle" font-family="inherit" font-size="10" fill="#0f6e56">Claude — decides</text>
+        <text x="225" y="118" text-anchor="middle" font-family="inherit" font-size="10" fill="#0f6e56">which tools to call</text>
+
+        <line x1="290" y1="98" x2="328" y2="98" stroke="#888780" stroke-width="1" marker-end="url(#arr)"/>
+
+        <!-- Tools group -->
+        <rect x="330" y="30" width="140" height="44" rx="8" fill="#f7f6f2" stroke="#e0ddd5" stroke-width="0.5"/>
+        <text x="400" y="52" text-anchor="middle" font-family="inherit" font-size="10.5" font-weight="500" fill="#3a3a38">Web search tool</text>
+        <text x="400" y="66" text-anchor="middle" font-family="inherit" font-size="10" fill="#6b6b68">HTTP Request node</text>
+
+        <rect x="330" y="84" width="140" height="44" rx="8" fill="#f7f6f2" stroke="#e0ddd5" stroke-width="0.5"/>
+        <text x="400" y="106" text-anchor="middle" font-family="inherit" font-size="10.5" font-weight="500" fill="#3a3a38">Fetch &amp; extract</text>
+        <text x="400" y="120" text-anchor="middle" font-family="inherit" font-size="10" fill="#6b6b68">HTTP + Code node</text>
+
+        <rect x="330" y="138" width="140" height="44" rx="8" fill="#f7f6f2" stroke="#e0ddd5" stroke-width="0.5"/>
+        <text x="400" y="160" text-anchor="middle" font-family="inherit" font-size="10.5" font-weight="500" fill="#3a3a38">Summarise</text>
+        <text x="400" y="174" text-anchor="middle" font-family="inherit" font-size="10" fill="#6b6b68">LLM call</text>
+
+        <line x1="470" y1="52" x2="508" y2="98" stroke="#888780" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr)"/>
+        <line x1="470" y1="106" x2="508" y2="106" stroke="#888780" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr)"/>
+        <line x1="470" y1="160" x2="508" y2="112" stroke="#888780" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr)"/>
+
+        <!-- Output -->
+        <rect x="510" y="70" width="130" height="56" rx="8" fill="#faeeda" stroke="#ba7517" stroke-width="0.5"/>
+        <text x="575" y="94" text-anchor="middle" font-family="inherit" font-size="11" font-weight="500" fill="#633806">Output</text>
+        <text x="575" y="112" text-anchor="middle" font-family="inherit" font-size="10" fill="#854f0b">Markdown report</text>
+      </svg>
+    </div>
+
+    <p>The practical win: I stopped writing orchestration code. The agent handles the loop of "search → read → decide if I need more → summarise". I just define the tools, set a system prompt, and let it run. For research-style tasks this alone replaced a non-trivial amount of custom code.</p>
+
+  </div>
+
+  <!-- SECTION 4: TIPS -->
+  <div class="section">
+    <p class="section-label">06 · Tips</p>
+    <h2>Things that took me too long to learn</h2>
+
+    <div class="tip-grid">
+      <div class="tip-item">
+        <div class="tip-num">01</div>
+        <div class="tip-body">
+          <h4>Build one workflow for one job</h4>
+          <p>The temptation is to make one mega-workflow that handles everything. Don't. Small, single-purpose workflows are easier to debug, easier to reuse, and don't break each other when you make changes. Use sub-workflows to share logic.</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-num">02</div>
+        <div class="tip-body">
+          <h4>Use the Error Workflow feature early</h4>
+          <p>Set up a dedicated error workflow that sends a Slack message whenever anything fails. Without it, workflows fail silently and you find out a week later that nothing has been running. Takes 5 minutes to set up, saves hours of confusion.</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-num">03</div>
+        <div class="tip-body">
+          <h4>The Code node is not a last resort</h4>
+          <p>Reach for a Code node early when the built-in nodes would need three steps to do what <code>items.map()</code> can do in one. It keeps workflows shorter and the logic is much easier to read.</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-num">04</div>
+        <div class="tip-body">
+          <h4>Pin data during development</h4>
+          <p>In the editor you can pin the output of any node so it doesn't re-fetch live data every time you run. Use this constantly when building — it speeds up iteration and stops you from hitting API rate limits while testing.</p>
+        </div>
+      </div>
+      <div class="tip-item">
+        <div class="tip-num">05</div>
+        <div class="tip-body">
+          <h4>Webhook → respond immediately, process async</h4>
+          <p>If a webhook caller is waiting for a response, return <code>200 OK</code> right away with a Respond to Webhook node, then continue processing. Don't make the caller wait for your entire workflow to finish.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <a href="../index.html">← All posts</a> · soumya.dev
+</footer>
+
+</body>
+</html>
